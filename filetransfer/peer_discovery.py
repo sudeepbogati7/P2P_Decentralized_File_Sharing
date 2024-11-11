@@ -28,18 +28,14 @@ def discover_peers():
     listener = PeerListener()
     service_type = "_p2pfiletransfer._tcp.local."
 
-    # Start discovering peers
     browser = ServiceBrowser(zeroconf, service_type, listener)
 
-    # Allow more time for discovery (10 seconds)
     import time
     time.sleep(10)
 
-    # Stop discovery
     zeroconf.close()
 
     return listener.peers
-
 
 def register_service():
     zeroconf = Zeroconf()
@@ -58,4 +54,7 @@ def register_service():
     )
 
     zeroconf.register_service(service_info)
-    print(f"Service registered as {service_name} with IP {socket.gethostbyname(socket.gethostname())}")
+    print(f"Service registered as {service_name} with IP {socket.gethostbyname(socket.gethostname())}")\
+
+
+
