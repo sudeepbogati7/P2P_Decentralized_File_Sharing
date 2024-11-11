@@ -1,11 +1,39 @@
+<!-- main.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decentralized File Sharing </title>
+    <title>P2P File Sharing</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
-<body>
-     <h1>This is the main page of the application .....</h1>
+<body class="bg-gray-800 text-white">
+    <div class="container mx-auto py-10">
+        <h1 class="text-3xl font-bold mb-6">P2P File Sharing Application</h1>
+
+        <h2 class="text-2xl mb-4">Server Info</h2>
+        <div class="bg-gray-700 p-4 rounded mb-6">
+            <p><strong>Name:</strong> {{ server_info.name }}</p>
+            <p><strong>IP:</strong> {{ server_info.ip }}</p>
+            <p><strong>Port:</strong> {{ server_info.port }}</p>
+        </div>
+
+        <h2 class="text-2xl mb-4">Discovered Peers</h2>
+        <div class="bg-gray-700 p-4 rounded">
+            {% if peers %}
+                <ul>
+                    {% for peer in peers %}
+                        <li class="py-2 border-b border-gray-600">
+                            <p><strong>Name:</strong> {{ peer.name }}</p>
+                            <p><strong>IP:</strong> {{ peer.ip }}</p>
+                            <p><strong>Port:</strong> {{ peer.port }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No peers discovered on the network.</p>
+            {% endif %}
+        </div>
+    </div>
 </body>
 </html>

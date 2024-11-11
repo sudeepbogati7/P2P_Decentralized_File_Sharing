@@ -1,48 +1,61 @@
-from zeroconf import Zeroconf, ServiceInfo
+# peer_discovery.py
+# peer_discovery.py
+
+from zeroconf import Zeroconf, ServiceInfo, ServiceBrowser,IPVersion
 import socket
 
+class PeerListener:
+    def __init__(self):
+        self.peers = []
 
-def discover_peers():
-    zeroconf = Zeroconf()
-    service_type = "_p2pfiletransfer._tcp.local."
-    print("Discovering peers...")
+    def add_service(self, zeroconf, service_type, name):
+        info = zeroconf.get_service_info(service_type, name)
+        if info:
+            peer_data = {
+                "name": info.server,
+                "ip": socket.inet_ntoa(info.addresses[0]),
+                "port": info.port,
+            }
+            # Avoid adding the current device as a peer
+            if peer_data["ip"] != socket.gethostbyname(socket.gethostname()):
+                self.peers.append(peer_data)
 
-    try:
-        browser = zeroconf.add_service_listener(service_type, MyListener())
-
-    except Exception as e :
-        print(f"Error in discovery: {e}")
-    input("Press enter to exit...")
-
-    zeroconf.close()
-
-
-class MyListener:
-    def remove_service(self, zeroconf, type, name):
+    def remove_service(self, zeroconf, service_type, name):
         print(f"Service removed: {name}")
 
-    def add_service(self, zeroconf, type, name):
-        print(f"Service added: {name}")
-        # You can further extract IPs, port, and other data here
-        info = zeroconf.get_service_info(type, name)
-        print(f"Peer found: {info.server} at {info.addresses[0]}:{info.port}")
+def discover_peers():
+    zeroconf = Zeroconf(ip_version=IPVersion.All)
+    listener = PeerListener()
+    service_type = "_p2pfiletransfer._tcp.local."
+
+    # Start discovering peers
+    browser = ServiceBrowser(zeroconf, service_type, listener)
+
+    # Allow more time for discovery (10 seconds)
+    import time
+    time.sleep(10)
+
+    # Stop discovery
+    zeroconf.close()
+
+    return listener.peers
+
 
 def register_service():
     zeroconf = Zeroconf()
-    host_name = socket.gethostname()
-    ip = socket.gethostbyname(host_name)
-    port = 9999 
+    service_type = "_p2pfiletransfer._tcp.local."
+    service_name = f"p2p-server-{socket.gethostname()}._p2pfiletransfer._tcp.local."
+    ip = socket.inet_aton(socket.gethostbyname(socket.gethostname()))
+    port = 8000  # Adjust this if running on a different port
 
     service_info = ServiceInfo(
-        "_p2pfiletransfer._tcp.local.",
-        f"Peer-{host_name}._p2pfiletransfer._tcp.local.",
-        addresses=[socket.inet_aton(ip)],
+        service_type,
+        service_name,
+        addresses=[ip],
         port=port,
         properties={},
+        server=f"{socket.gethostname()}.local.",
     )
-    zeroconf.register_service(service_info)
-    print(f"Service registered: {service_info.name} at {ip}:{port}")
 
-    input("Press enter to unregister service and exit...")
-    zeroconf.unregister_service(service_info)
-    zeroconf.close()
+    zeroconf.register_service(service_info)
+    print(f"Service registered as {service_name} with IP {socket.gethostbyname(socket.gethostname())}")
