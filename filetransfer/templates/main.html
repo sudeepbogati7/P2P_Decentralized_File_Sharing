@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-800 text-white">
     <div class="container mx-auto py-10">
-        <h1 class="text-3xl font-bold mb-6">P2P File Sharing Application</h1>
+        <!-- <h1 class="text-3xl font-bold mb-6">P2P File Sharing Application</h1> -->
 
 
         <div>
@@ -38,22 +38,46 @@
     <script>
         const ws = new WebSocket('ws://' + window.location.host + '/ws/peers/');
     
+        ws.onopen = () => {
+            const ip = location.hostname; // Gets the client IP address (for testing purposes)
+            const hostname = window.navigator.userAgent;
+            ws.send(JSON.stringify({
+                action: 'register',
+                ip: ip,
+                hostname: hostname
+            }));
+            console.log("my ip ", ip)
+            console.log("my host ", hostname)
+
+        };
+
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
             const peers = data.peers;
-            
+
+
+            console.log("Message received:", event.data);
+
             const peerList = document.getElementById('peer-list');
             peerList.innerHTML = '';
     
             if (peers.length === 0) {
                 peerList.innerHTML = '<li>No peers found</li>';
             } else {
-                peers.forEach(peer => {
-                    const peerItem = document.createElement('li');
-                    peerItem.textContent = `${peer.name} - ${peer.ip}:${peer.port}`;
-                    peerList.appendChild(peerItem);
-                });
+                updatePeerList(peers)
             }
+        };
+        function updatePeerList(peers) {
+            const peerListElement = document.getElementById('peer-list');
+            peerListElement.innerHTML = ''; // Clear current list
+            peers.forEach(peer => {
+                const li = document.createElement('li');
+                li.textContent = `${peer.name} (${peer.ip}:${peer.port})`;
+                peerListElement.appendChild(li);
+            });
+        }
+        ws.onerror = (error) => {
+            console.error("WebSocket error:", error);
         };
     
         ws.onclose = function() {

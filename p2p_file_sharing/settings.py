@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-6n@ghdq^c=4mf^=2%ck!f3!gfz(_#3lluu^d3-2kb*)s1&elrg'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "channels",
     'filetransfer',
-    "channels"
 ]
 
 MIDDLEWARE = [
@@ -70,8 +70,18 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'p2p_file_sharing.wsgi.application'
+
 ASGI_APPLICATION = 'p2p_file_sharing.asgi.application'
 
+
+CHANNEL_LAYERS = {
+    "default": {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

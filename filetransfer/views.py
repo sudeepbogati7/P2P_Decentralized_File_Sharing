@@ -1,23 +1,35 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
-# from .peer_discovery import discover_peers
+from .peer_discovery import PeerDiscovery, PeerRegistration
 from zeroconf import ServiceInfo, Zeroconf, NonUniqueNameException
 import socket
 import json
 import uuid
-
+import time
 # Initialize Zeroconf globally
 zeroconf = Zeroconf()
+import threading
+from .websocket_server import start_server  # Import your WebSocket server start function
+
 
 class MainPage(View):
     def get(self, request):
-        # Discover other peers on the network
-        # peers = discover_peers()
-        
-        # Render the main page with peer details
-        return render(request, "main.html")
+        global websocket_server_started
+        websocket_server_started = False
+        # Start the WebSocket server only if it hasn't been started yet
+        if not websocket_server_started:
+            threading.Thread(target=start_server, daemon=True).start()
+            websocket_server_started = True
+            print("WebSocket server started from get method")
 
+        # Discover other peers on the network
+        peer_discovery = PeerDiscovery()
+        peers = peer_discovery.get_peers()
+
+        print("Discovered peers:", peers)
+        # Render the main page with peer details
+        return render(request, "main.html", {"peers": peers})
     def post(self, request):
         try:
             data = json.loads(request.body)
