@@ -1,60 +1,41 @@
 # peer_discovery.py
-# peer_discovery.py
-
-from zeroconf import Zeroconf, ServiceInfo, ServiceBrowser,IPVersion
+from zeroconf import Zeroconf, ServiceBrowser
 import socket
 
 class PeerListener:
     def __init__(self):
-        self.peers = []
+        self.peers = {}
 
     def add_service(self, zeroconf, service_type, name):
         info = zeroconf.get_service_info(service_type, name)
         if info:
-            peer_data = {
-                "name": info.server,
-                "ip": socket.inet_ntoa(info.addresses[0]),
-                "port": info.port,
-            }
-            # Avoid adding the current device as a peer
-            if peer_data["ip"] != socket.gethostbyname(socket.gethostname()):
-                self.peers.append(peer_data)
+            ip_address = socket.inet_ntoa(info.addresses[0])
+            service_name = info.name
+            if service_name not in self.peers:
+                print(f"Discovered peer: {service_name} at {ip_address}")
+                self.peers[service_name] = {
+                    "name": service_name,
+                    "ip": ip_address,
+                    "port": info.port,
+                }
 
     def remove_service(self, zeroconf, service_type, name):
-        print(f"Service removed: {name}")
+        if name in self.peers:
+            print(f"Service removed: {name}")
+            del self.peers[name]
 
-def discover_peers():
-    zeroconf = Zeroconf(ip_version=IPVersion.All)
-    listener = PeerListener()
-    service_type = "_p2pfiletransfer._tcp.local."
+    def update_service(self, zeroconf, service_type, name):
+        print(f"Service updated: {name}")
 
-    browser = ServiceBrowser(zeroconf, service_type, listener)
+# Function to discover peers continuously
+class PeerDiscovery:
+    def __init__(self):
+        self.zeroconf = Zeroconf()
+        self.listener = PeerListener()
+        self.browser = ServiceBrowser(self.zeroconf, "_http._tcp.local.", self.listener)
 
-    import time
-    time.sleep(10)
+    def get_peers(self):
+        return list(self.listener.peers.values())
 
-    zeroconf.close()
-
-    return listener.peers
-
-def register_service():
-    zeroconf = Zeroconf()
-    service_type = "_p2pfiletransfer._tcp.local."
-    service_name = f"p2p-server-{socket.gethostname()}._p2pfiletransfer._tcp.local."
-    ip = socket.inet_aton(socket.gethostbyname(socket.gethostname()))
-    port = 8000  # Adjust this if running on a different port
-
-    service_info = ServiceInfo(
-        service_type,
-        service_name,
-        addresses=[ip],
-        port=port,
-        properties={},
-        server=f"{socket.gethostname()}.local.",
-    )
-
-    zeroconf.register_service(service_info)
-    print(f"Service registered as {service_name} with IP {socket.gethostbyname(socket.gethostname())}")\
-
-
-
+    def close(self):
+        self.zeroconf.close()

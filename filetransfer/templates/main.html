@@ -11,6 +11,17 @@
     <div class="container mx-auto py-10">
         <h1 class="text-3xl font-bold mb-6">P2P File Sharing Application</h1>
 
+
+        <div>
+            {% if message %}
+            <div class="text-green-600 bg-green-100 w-fit px-6 mx-auto">{{ message }}</div>
+            <div>Ip Address : {{ ip_addr }}</div>
+            <div>Hostname :  {{ device_name }} </div>
+            {% endif %}
+            {% if error %}
+            <div class="text-red-600 bg-red-100 w-fit px-6 mx-auto">{{ error }}</div>
+            {% endif %}
+        </div>
         <h2 class="text-2xl mb-4">Server Info</h2>
         <div class="bg-gray-700 p-4 rounded mb-6">
             <p><strong>Name:</strong> {{ server_info.name }}</p>
@@ -19,21 +30,37 @@
         </div>
 
         <h2 class="text-2xl mb-4">Discovered Peers</h2>
-        <div class="bg-gray-700 p-4 rounded">
-            {% if peers %}
-                <ul>
-                    {% for peer in peers %}
-                        <li class="py-2 border-b border-gray-600">
-                            <p><strong>Name:</strong> {{ peer.name }}</p>
-                            <p><strong>IP:</strong> {{ peer.ip }}</p>
-                            <p><strong>Port:</strong> {{ peer.port }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>No peers discovered on the network.</p>
-            {% endif %}
-        </div>
+        <ul id="peer-list">
+            <li>Loading peers...</li>
+        </ul>
     </div>
+
+    <script>
+        const ws = new WebSocket('ws://' + window.location.host + '/ws/peers/');
+    
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const peers = data.peers;
+            
+            const peerList = document.getElementById('peer-list');
+            peerList.innerHTML = '';
+    
+            if (peers.length === 0) {
+                peerList.innerHTML = '<li>No peers found</li>';
+            } else {
+                peers.forEach(peer => {
+                    const peerItem = document.createElement('li');
+                    peerItem.textContent = `${peer.name} - ${peer.ip}:${peer.port}`;
+                    peerList.appendChild(peerItem);
+                });
+            }
+        };
+    
+        ws.onclose = function() {
+            console.log('WebSocket closed, attempting to reconnect...');
+            setTimeout(() => window.location.reload(), 5000);
+        };
+    </script>
+    
 </body>
 </html>

@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'filetransfer'
+    'filetransfer',
+    "channels"
 ]
 
 MIDDLEWARE = [
@@ -69,6 +70,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'p2p_file_sharing.wsgi.application'
+ASGI_APPLICATION = 'p2p_file_sharing.asgi.application'
 
 
 # Database
